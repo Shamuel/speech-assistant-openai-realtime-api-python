@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketDisconnect
 from twilio.rest import Client
 import websockets
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 import uvicorn
 import re
 
@@ -17,10 +17,11 @@ load_dotenv()
 # Configuration
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
-PHONE_NUMBER_FROM = os.getenv('PHONE_NUMBER_FROM')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-raw_domain = os.getenv('DOMAIN', '')
-DOMAIN = re.sub(r'(^\w+:|^)\/\/|\/+$', '', raw_domain) # Strip protocols and trailing slashes from DOMAIN
+env_config = dotenv_values(".env")
+DOMAIN = env_config['DOMAIN']
+print(f"Domain: {DOMAIN}")
 
 PORT = int(os.getenv('PORT', 6060))
 SYSTEM_MESSAGE = (
@@ -38,7 +39,7 @@ LOG_EVENT_TYPES = [
 
 app = FastAPI()
 
-if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and PHONE_NUMBER_FROM and OPENAI_API_KEY):
+if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER and OPENAI_API_KEY):
     raise ValueError('Missing Twilio and/or OpenAI environment variables. Please set them in the .env file.')
 
 # Initialize Twilio client
@@ -201,7 +202,7 @@ async def make_call(phone_number_to_call: str):
     )
 
     call = client.calls.create(
-        from_=PHONE_NUMBER_FROM,
+        from_=TWILIO_PHONE_NUMBER,
         to=phone_number_to_call,
         twiml=outbound_twiml
     )
@@ -210,6 +211,9 @@ async def make_call(phone_number_to_call: str):
 
 async def log_call_sid(call_sid):
     """Log the call SID."""
+    # Log the WebSocket URL we are going to access
+    websocket_url = f"wss://{DOMAIN}/media-stream"
+    print(f"WebSocket URL for this call: {websocket_url}")
     print(f"Call started with SID: {call_sid}")
 
 if __name__ == "__main__":

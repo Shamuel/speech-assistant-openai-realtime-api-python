@@ -8,7 +8,7 @@ load_dotenv()
 # Get Twilio credentials from environment variables
 account_sid = os.getenv("TWILIO_ACCOUNT_SID")
 auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-phone_number_from = os.getenv("PHONE_NUMBER_FROM")
+phone_number_from = os.getenv("TWILIO_PHONE_NUMBER")
 
 # Initialize Twilio client
 client = Client(account_sid, auth_token)
